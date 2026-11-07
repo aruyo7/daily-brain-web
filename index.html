@@ -1,0 +1,1639 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Brain</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", sans-serif;
+  text-align: center;
+  background: linear-gradient(135deg, #f5e8ff, #e0f5ff);
+  min-height: 100vh;
+  margin: 0;
+  padding: 30px 15px;
+}
+
+h1 {
+  color: #7546b4;
+  font-size: 34px;
+}
+
+.card {
+  max-width: 440px;
+  margin: 25px auto;
+  padding: 25px 20px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 5px 20px #00000015;
+}
+
+button {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  margin: 12px 0;
+  background: #9361d6;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #7546b4;
+}
+
+button:disabled {
+  background: #bbbbbb;
+  cursor: default;
+}
+
+.number {
+  font-size: 38px;
+  font-weight: bold;
+  color: #7546b4;
+  letter-spacing: 8px;
+  margin: 25px 0;
+  overflow-wrap: anywhere;
+}
+
+input {
+  width: 100%;
+  padding: 15px;
+  font-size: 26px;
+  text-align: center;
+  border: 2px solid #9361d6;
+  border-radius: 12px;
+}
+
+#message {
+  font-size: 21px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+.small {
+  color: #666;
+  font-size: 14px;
+}
+
+
+/* ===== 集中力ゲーム V1 ===== */
+
+#focusGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 20px auto;
+  max-width: 360px;
+}
+
+.focusTile {
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 0;
+  padding: 0;
+  border: 3px solid transparent;
+  border-radius: 15px;
+  font-size: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.12s;
+}
+
+.focusTile:hover {
+  transform: scale(1.04);
+}
+
+.focusTile:active {
+  transform: scale(0.94);
+}
+
+.focusTile:focus-visible {
+  outline: 3px solid #333;
+  outline-offset: 3px;
+}
+
+#focusTimer {
+  color: #7546b4;
+}
+
+#focusScore {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* 過去7日間のプレイ履歴グラフ */
+#playHistory {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.history-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.history-date {
+    width: 45px;
+    flex-shrink: 0;
+}
+
+.history-bar-bg {
+    flex: 1;
+    height: 14px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.history-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #c084fc);
+    border-radius: 10px;
+}
+
+.history-count {
+    width: 62px;
+    flex-shrink: 0;
+    text-align: right;
+    white-space: nowrap;
+    font-size: 11px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🧠 Daily Brain</h1>
+<p>毎日3分！楽しく脳トレ</p>
+
+<div class="card" id="home">
+  <h2>今日の脳トレ</h2>
+
+  
+<div id="bestRecords" style="
+  background: #f5efff;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 15px 0;
+  text-align: left;
+  font-size: 15px;
+">
+  <strong>🏆 あなたの最高記録</strong>
+
+  <p id="bestMemory">🧩 記憶力：記録なし</p>
+  <p id="bestMath">🔢 計算：記録なし</p>
+  <p id="bestFocus">⚡ 集中力：記録なし</p>
+</div>
+ 
+<div id="dailyStats" style="
+    background: #eaf8f0;
+    border-radius: 12px;
+    padding: 12px;
+    margin: 15px 0;
+    text-align: left;
+    font-size: 15px;
+">
+    <strong>📅 今日の脳トレ</strong>
+    <p id="todayPlays">今日のプレイ回数：0回</p>
+    <p id="playStreak">🔥 連続プレイ日数：0日</p>
+    <p id="dailyGoal">🎯 今日の目標：0 / 3回</p>
+  
+  <div id="badgeArea">
+    <h3>🏅 獲得バッジ</h3>
+    <p id="badgeList">まだ獲得したバッジはありません</p>
+ </div>
+  <div id="playHistoryArea">
+    <h3>📊 過去7日間のプレイ履歴</h3>
+    <div id="playHistory">履歴を読み込み中...</div>
+</div>
+
+</div>
+  <button onclick="startGame()">
+    🧩 記憶力ゲーム
+  </button>
+
+ 
+  <button onclick="startMathGame()">
+    🔢 計算ゲーム
+  </button>
+
+
+  
+  <button onclick="startFocusGame()">
+    ⚡ 集中力ゲーム
+  </button>
+  <button onclick="showHowToPlay()">
+    📖 遊び方・設定
+</button>
+</div>
+<!-- 遊び方・設定画面 -->
+<div class="card hidden" id="howToPlay">
+
+    <h2>📖 遊び方・設定</h2>
+
+    <h3>🧩 記憶力ゲーム</h3>
+    <p>
+        表示された数字を覚えて、
+        正しい数字を入力しましょう。
+        レベルが上がるほど難しくなります。
+    </p>
+
+    <h3>🔢 計算ゲーム</h3>
+    <p>
+        30秒間で計算問題に挑戦！
+        できるだけ多く正解して、
+        高得点を目指しましょう。
+    </p>
+
+    <h3>⚡ 集中力ゲーム</h3>
+    <p>
+        30秒間の集中力チャレンジ！
+        素早く正確に操作して、
+        最高記録を更新しましょう。
+    </p>
+
+    <h3>🏆 記録とバッジ</h3>
+    <p>
+        最高記録や毎日のプレイ回数、
+        連続プレイ日数を記録します。
+        目標を達成するとバッジも獲得できます。
+    </p>
+
+    <h3>💾 データの保存について</h3>
+    <p>
+        ゲームの記録は、このブラウザ内に保存されます。
+        ブラウザのデータを削除すると、
+        記録が消える場合があります。
+    </p>
+    <h3>⚙️ 効果音設定</h3>
+
+<label>
+    <input type="checkbox" id="soundEnabled" checked onchange="saveSoundSetting()">
+    🔊 効果音をONにする
+</label>
+    
+<p>🎚️ 効果音の音量</p>
+
+<select id="soundVolume" onchange="saveSoundVolume()">
+    <option value="low">🔉 小</option>
+    <option value="medium" selected>🔊 中</option>
+    <option value="high">🔊 大</option>
+</select>
+<h3>🔊 効果音テスト</h3>
+
+<button onclick="playCorrectSound()">
+    ✅ 正解音を試聴
+</button>
+
+<button onclick="playWrongSound()">
+    ❌ 不正解音を試聴
+</button>
+
+<button onclick="playStartSound()">
+    🎮 開始音を試聴
+</button>
+
+<button onclick="playEndSound()">
+    🏁 終了音を試聴
+</button>
+    <button onclick="showHome()">
+        🏠 ホームに戻る
+    </button>
+
+</div>
+<div class="card hidden" id="game">
+
+  <h2>🧩 記憶力ゲーム</h2>
+
+  <p id="levelText">レベル 1</p>
+
+  <p id="instruction">
+    表示された数字を覚えてください
+  </p>
+
+  <div class="number" id="numberDisplay"></div>
+
+  <div id="answerArea" class="hidden">
+    <input
+      id="answerInput"
+      type="text"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      autocomplete="off"
+      placeholder="数字を入力"
+    >
+
+    <button id="answerButton" onclick="checkAnswer()">
+      回答する
+    </button>
+  </div>
+
+  <p id="message" aria-live="polite"></p>
+
+  <button id="nextButton"
+          class="hidden"
+          onclick="nextLevel()">
+    次のレベルへ
+  </button>
+
+  <button onclick="goHome()">
+    ホームに戻る
+  </button>
+
+</div>
+
+<!-- 計算ゲーム画面 -->
+<div class="card hidden" id="mathGame">
+
+  <h2>🔢 計算ゲーム</h2>
+
+  <p>30秒で何問解けるかな？</p>
+
+  <h3 id="mathTimer">残り時間：30秒</h3>
+
+  <p id="mathScore">得点：0点</p>
+
+  <div class="number" id="mathQuestion">
+    3 + 5 = ?
+  </div>
+
+  <div id="mathAnswerArea">
+    <input
+      id="mathAnswer"
+      type="number"
+      inputmode="numeric"
+      placeholder="答えを入力"
+    >
+
+    <button onclick="checkMathAnswer()">
+      回答する
+    </button>
+  </div>
+
+  <p id="mathMessage" aria-live="polite"></p>
+
+  <button
+    id="mathRetry"
+    class="hidden"
+    onclick="startMathGame()">
+    もう一度挑戦
+  </button>
+
+  <button onclick="mathGoHome()">
+    ホームに戻る
+  </button>
+
+</div>
+<!-- 計算ゲーム画面ここまで -->
+
+
+<!-- 集中力ゲーム V1 -->
+<div class="card hidden" id="focusGame">
+
+  <h2>⚡ 集中力ゲーム</h2>
+
+  <p>1つだけ違う色を見つけよう！</p>
+
+  <h3 id="focusTimer">残り時間：30秒</h3>
+
+  <p id="focusScore">得点：0点</p>
+
+  <div id="focusGrid"></div>
+
+  <p id="focusMessage" aria-live="polite"></p>
+
+  <button
+    id="focusRetry"
+    class="hidden"
+    onclick="startFocusGame()">
+    もう一度挑戦
+  </button>
+
+  <button onclick="focusGoHome()">
+    ホームに戻る
+  </button>
+
+</div>
+<!-- 集中力ゲーム V1 ここまで -->
+
+
+<p class="small">Daily Brain Version 0.1</p>
+
+<script>
+let level = 1;
+let correctNumber = "";
+let gameTimer = null;
+let gameState = "home";
+
+const home = document.getElementById("home");
+const howToPlay = document.getElementById("howToPlay");
+const game = document.getElementById("game");
+const display = document.getElementById("numberDisplay");
+const answerArea = document.getElementById("answerArea");
+const answerInput = document.getElementById("answerInput");
+const message = document.getElementById("message");
+const nextButton = document.getElementById("nextButton");
+const answerButton = document.getElementById("answerButton");
+const instruction = document.getElementById("instruction");
+
+// 遊び方・設定画面を開く
+function showHowToPlay() {
+    home.classList.add("hidden");
+    howToPlay.classList.remove("hidden");
+}
+// 遊び方画面からホームに戻る
+function showHome() {
+    howToPlay.classList.add("hidden");
+    home.classList.remove("hidden");
+}
+// 効果音の共通処理
+let audioContext = null;
+ 
+// 効果音の音量を取得
+function getSoundVolume() {
+    const volumeSelect = document.getElementById("soundVolume");
+
+    if (!volumeSelect) return 0.20;
+
+    if (volumeSelect.value === "low") {
+        return 0.08;
+    }
+
+    if (volumeSelect.value === "high") {
+        return 0.30;
+    }
+
+    return 0.20;
+}
+
+// 短い電子音を生成する
+function playTone(frequency, duration, type = "sine") {
+    const soundCheckbox = document.getElementById("soundEnabled");
+
+    if (soundCheckbox && !soundCheckbox.checked) {
+        return;
+    }
+  
+  try {
+        const AudioContextClass =
+            window.AudioContext || window.webkitAudioContext;
+
+        if (!AudioContextClass) {
+            return;
+        }
+
+        if (!audioContext) {
+            audioContext = new AudioContextClass();
+        }
+
+        if (audioContext.state === "suspended") {
+            audioContext.resume().catch(() => {});
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.value = frequency;
+
+        const now = audioContext.currentTime;
+
+        // 音量を控えめに設定
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(
+            getSoundVolume(), now + 0.01
+        );
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001, now + duration
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start(now);
+        oscillator.stop(now + duration);
+
+    } catch (e) {
+        console.warn("効果音の再生に失敗", e);
+    }
+}
+// 正解音
+function playCorrectSound() {
+    playTone(880, 0.15, "sine");
+}
+
+// 不正解音
+function playWrongSound() {
+    playTone(440, 0.22, "triangle");
+}
+// ゲーム開始音
+function playStartSound() {
+    playTone(660, 0.18, "sine");
+}
+
+// ゲーム終了音
+function playEndSound() {
+    playTone(523, 0.35, "sine");
+}
+// 効果音設定を読み込む
+function loadSoundSetting() {
+    const checkbox = document.getElementById("soundEnabled");
+
+    if (!checkbox) {
+        return;
+    }
+
+    try {
+        const saved = localStorage.getItem(SOUND_ENABLED_KEY);
+
+        // 初期設定はON
+        checkbox.checked = saved !== "false";
+
+    } catch (e) {
+        console.warn("効果音設定の読み込みに失敗", e);
+        checkbox.checked = true;
+    }
+}
+
+// 保存した効果音の音量を復元
+function loadSoundVolume() {
+    const volumeSelect = document.getElementById("soundVolume");
+
+    if (!volumeSelect) return;
+
+    try {
+        const saved = localStorage.getItem("dailyBrainSoundVolume");
+
+        if (saved === "low" || saved === "medium" || saved === "high") {
+            volumeSelect.value = saved;
+        } else {
+            volumeSelect.value = "medium";
+        }
+    } catch (e) {
+        console.warn("音量設定の読み込みに失敗", e);
+        volumeSelect.value = "medium";
+    }
+}
+
+// 効果音設定を保存する
+function saveSoundSetting() {
+    const checkbox = document.getElementById("soundEnabled");
+
+    if (!checkbox) {
+        return;
+    }
+
+    try {
+        localStorage.setItem(
+            SOUND_ENABLED_KEY,
+            String(checkbox.checked)
+        );
+
+    } catch (e) {
+        console.warn("効果音設定の保存に失敗", e);
+    }
+}
+// 効果音の音量設定を保存
+function saveSoundVolume() {
+    const volumeSelect = document.getElementById("soundVolume");
+
+    if (!volumeSelect) return;
+
+    try {
+        localStorage.setItem("dailyBrainSoundVolume", volumeSelect.value);
+    } catch (e) {
+        console.warn("音量設定の保存に失敗", e);
+    }
+}
+
+function makeNumber(length) {
+  let result = "";
+
+  for (let i = 0; i < length; i++) {
+    result += Math.floor(Math.random() * 10);
+  }
+
+  return result;
+}
+
+function startGame() {
+  addTodayPlay();
+  playStartSound();
+  
+  level = 1;
+  home.classList.add("hidden");
+  game.classList.remove("hidden");
+
+  startLevel();
+}
+
+function startLevel() {
+  clearTimeout(gameTimer);
+
+  gameState = "memorizing";
+
+  document.getElementById("levelText").textContent =
+    "レベル " + level;
+
+  const digits = Math.min(level + 2, 12);
+
+  correctNumber = makeNumber(digits);
+
+  display.textContent = correctNumber;
+  answerArea.classList.add("hidden");
+  nextButton.classList.add("hidden");
+  message.textContent = "";
+
+  answerInput.value = "";
+  answerInput.disabled = false;
+  answerButton.disabled = false;
+
+  instruction.textContent =
+    "3秒間で数字を覚えてください";
+
+  gameTimer = setTimeout(() => {
+    gameTimer = null;
+    if (gameState !== "memorizing") return;
+
+    gameState = "answering";
+
+    display.textContent = "？？？";
+    instruction.textContent =
+      "覚えた数字を入力してください";
+
+    answerArea.classList.remove("hidden");
+    answerInput.focus();
+  }, 3000);
+}
+
+function checkAnswer() {
+  if (gameState !== "answering") return;
+
+  const answer = answerInput.value.trim();
+
+  if (!/^[0-9]+$/.test(answer)) {
+    message.textContent = "数字を入力してください";
+    message.style.color = "#cc6600";
+    return;
+  }
+
+  gameState = "result";
+  answerInput.disabled = true;
+  answerButton.disabled = true;
+
+  
+  if (answer === correctNumber) {
+    playCorrectSound();
+    saveBestRecord("memory", level);
+
+    message.textContent = "🎉 正解！すごい！";
+
+
+    nextButton.classList.remove("hidden");
+  } else {
+    playWrongSound();
+    
+    message.textContent =
+      "残念！正解は " + correctNumber;
+    message.style.color = "red";
+
+    nextButton.textContent = "もう一度挑戦";
+    nextButton.classList.remove("hidden");
+  }
+}
+
+function nextLevel() {
+  if (gameState !== "result") return;
+
+  if (answerInput.value.trim() === correctNumber) {
+    level++;
+  } else {
+    level = 1;
+  }
+
+  nextButton.textContent = "次のレベルへ";
+  startLevel();
+}
+
+function goHome() {
+  playEndSound();
+
+  clearTimeout(gameTimer);
+  gameTimer = null;
+  gameState = "home";
+
+  game.classList.add("hidden");
+  home.classList.remove("hidden");
+}
+
+answerInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    checkAnswer();
+  }
+});
+
+
+
+/* ===== 計算ゲーム V1 ===== */
+
+let mathTimerId = null;
+let mathEndTime = 0;
+let mathScore = 0;
+let mathCorrectCount = 0;
+let mathAnswerValue = 0;
+let mathPlaying = false;
+
+const mathGame = document.getElementById("mathGame");
+const mathTimerText = document.getElementById("mathTimer");
+const mathScoreText = document.getElementById("mathScore");
+const mathQuestion = document.getElementById("mathQuestion");
+const mathAnswer = document.getElementById("mathAnswer");
+const mathMessage = document.getElementById("mathMessage");
+const mathAnswerArea = document.getElementById("mathAnswerArea");
+const mathRetry = document.getElementById("mathRetry");
+
+function startMathGame() {
+  playStartSound();
+  addTodayPlay();
+  stopMathTimer();
+
+  clearTimeout(gameTimer);
+  gameTimer = null;
+  gameState = "home";
+
+  home.classList.add("hidden");
+  game.classList.add("hidden");
+  mathGame.classList.remove("hidden");
+
+  mathScore = 0;
+  mathCorrectCount = 0;
+  mathPlaying = true;
+
+  mathScoreText.textContent = "得点：0点";
+  mathTimerText.textContent = "残り時間：30秒";
+  mathMessage.textContent = "";
+  mathRetry.classList.add("hidden");
+  mathAnswerArea.classList.remove("hidden");
+
+  mathEndTime = Date.now() + 30000;
+
+  createMathQuestion();
+
+  mathTimerId = setInterval(updateMathTimer, 100);
+}
+
+function createMathQuestion() {
+  if (!mathPlaying) return;
+
+  let a = Math.floor(Math.random() * 20) + 1;
+  let b = Math.floor(Math.random() * 20) + 1;
+
+  const addition = Math.random() < 0.5;
+
+  if (addition) {
+    mathAnswerValue = a + b;
+    mathQuestion.textContent = a + " + " + b + " = ?";
+  } else {
+    // マイナスの答えにならないようにする
+    if (a < b) {
+      const temp = a;
+      a = b;
+      b = temp;
+    }
+
+    mathAnswerValue = a - b;
+    mathQuestion.textContent = a + " − " + b + " = ?";
+  }
+
+  mathAnswer.value = "";
+  mathAnswer.focus();
+}
+
+function checkMathAnswer() {
+  if (!mathPlaying) return;
+
+  if (Date.now() >= mathEndTime) {
+    finishMathGame();
+    return;
+  }
+
+  if (mathAnswer.value.trim() === "") {
+    mathMessage.textContent = "答えを入力してください";
+    mathMessage.style.color = "#cc6600";
+    return;
+  }
+
+  const userAnswer = Number(mathAnswer.value);
+
+  if (userAnswer === mathAnswerValue) {
+      playCorrectSound();
+    
+      mathScore += 10;
+      mathCorrectCount++;
+
+    mathMessage.textContent = "⭕ 正解！";
+    mathMessage.style.color = "green";
+  } else {
+    playWrongSound();
+    
+    mathMessage.textContent =
+      "❌ 残念！正解は " + mathAnswerValue;
+    mathMessage.style.color = "red";
+  }
+
+    mathScoreText.textContent =
+    "得点：" + mathScore + "点";
+
+  createMathQuestion();
+}
+
+function updateMathTimer() {
+  if (!mathPlaying) return;
+
+  const remaining = Math.max(
+    0,
+    Math.ceil((mathEndTime - Date.now()) / 1000)
+  );
+
+  mathTimerText.textContent =
+    "残り時間：" + remaining + "秒";
+
+  if (remaining <= 0) {
+    finishMathGame();
+  }
+}
+
+function finishMathGame() {
+  if (!mathPlaying) return;
+  
+  playEndSound();
+  
+  mathPlaying = false;
+  stopMathTimer();
+  
+  saveBestRecord("math", mathScore); 
+  
+  mathTimerText.textContent = "終了！";
+  mathQuestion.textContent = "🎉 結果発表";
+
+  mathAnswerArea.classList.add("hidden");
+
+  mathMessage.textContent =
+    "正解数：" + mathCorrectCount +
+    "問 ／ 得点：" + mathScore + "点";
+
+  mathMessage.style.color = "#7546b4";
+
+  mathRetry.classList.remove("hidden");
+}
+
+function stopMathTimer() {
+  if (mathTimerId !== null) {
+    clearInterval(mathTimerId);
+    mathTimerId = null;
+  }
+}
+
+function mathGoHome() {
+  // プレイ途中で戻る場合だけ終了音を鳴らす
+  if (mathPlaying) {
+    playEndSound();
+  }
+
+  mathPlaying = false;
+  stopMathTimer();
+
+  mathGame.classList.add("hidden");
+  home.classList.remove("hidden");
+}
+
+mathAnswer.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    checkMathAnswer();
+  }
+});
+
+/* ===== 計算ゲーム V1 ここまで ===== */
+
+
+/* ===== 集中力ゲーム V1 ===== */
+
+let focusTimerId = null;
+let focusEndTime = 0;
+let focusPlaying = false;
+let focusScore = 0;
+let focusCorrectCount = 0;
+let focusCorrectIndex = -1;
+
+const focusGame = document.getElementById("focusGame");
+const focusGrid = document.getElementById("focusGrid");
+const focusTimerText = document.getElementById("focusTimer");
+const focusScoreText = document.getElementById("focusScore");
+const focusMessage = document.getElementById("focusMessage");
+const focusRetry = document.getElementById("focusRetry");
+
+function startFocusGame() {
+  
+  playStartSound();
+  
+  addTodayPlay();
+  stopFocusTimer();
+
+  // 他のゲームのタイマーを停止
+  clearTimeout(gameTimer);
+  gameTimer = null;
+  gameState = "home";
+
+  stopMathTimer();
+  mathPlaying = false;
+
+  home.classList.add("hidden");
+  game.classList.add("hidden");
+  mathGame.classList.add("hidden");
+  focusGame.classList.remove("hidden");
+
+  focusScore = 0;
+  focusCorrectCount = 0;
+  focusPlaying = true;
+
+  focusScoreText.textContent = "得点：0点";
+  focusTimerText.textContent = "残り時間：30秒";
+  focusMessage.textContent = "";
+
+  focusRetry.classList.add("hidden");
+
+  focusEndTime = Date.now() + 30000;
+
+  createFocusQuestion();
+
+  focusTimerId = setInterval(updateFocusTimer, 100);
+}
+
+ 
+function createFocusQuestion() {
+  if (!focusPlaying) return;
+
+  focusGrid.innerHTML = "";
+
+  // 2問正解するごとにレベルアップ
+  const focusLevel = Math.min(
+    5,
+    Math.floor(focusCorrectCount / 2) + 1
+  );
+
+  // レベル別の図形数
+  const counts = [9, 16, 25, 36, 49];
+
+  const count = counts[focusLevel - 1];
+
+  const columns = Math.sqrt(count);
+
+  focusGrid.style.gridTemplateColumns =
+    "repeat(" + columns + ", 1fr)";
+
+  // 正解の位置をランダムに決定
+  focusCorrectIndex = Math.floor(Math.random() * count);
+
+  // 問題ごとに基本色を変える
+  const hues = [210, 280, 145, 340, 35, 185];
+
+  const hue = hues[
+    Math.floor(Math.random() * hues.length)
+  ];
+
+  // レベルが上がると色の差が小さくなる
+  const differences = [35, 25, 17, 11, 7];
+
+  const difference = differences[focusLevel - 1];
+
+  const baseLightness = 55;
+
+  const normalColor =
+    "hsl(" + hue + ", 75%, " +
+    baseLightness + "%)";
+
+  const differentColor =
+    "hsl(" + hue + ", 75%, " +
+    (baseLightness + difference) + "%)";
+
+  // 現在のレベルを表示
+  focusMessage.textContent =
+    "レベル " + focusLevel +
+    "：違う色の星を見つけよう！";
+
+  focusMessage.style.color = "#7546b4";
+
+  for (let i = 0; i < count; i++) {
+    const tile = document.createElement("button");
+
+    tile.type = "button";
+    tile.className = "focusTile";
+    tile.textContent = "★";
+
+    tile.style.backgroundColor =
+      i === focusCorrectIndex
+        ? differentColor
+        : normalColor;
+
+    tile.style.color = "#ffffff";
+
+    // 星の数に応じて文字サイズを調整
+    tile.style.fontSize =
+      count >= 36 ? "22px" : "30px";
+
+    tile.setAttribute(
+      "aria-label",
+      "星 " + (i + 1)
+    );
+
+    tile.addEventListener("click", () => {
+      checkFocusAnswer(i);
+    });
+
+    focusGrid.appendChild(tile);
+  }
+}
+
+
+function checkFocusAnswer(index) {
+  if (!focusPlaying) return;
+
+  if (Date.now() >= focusEndTime) {
+    finishFocusGame();
+    return;
+  }
+
+  if (index === focusCorrectIndex) {
+      playCorrectSound();
+    
+    
+    focusScore += 10;
+    focusCorrectCount++;
+
+    focusMessage.textContent = "⭕ 正解！";
+    focusMessage.style.color = "green";
+
+    focusScoreText.textContent =
+      "得点：" + focusScore + "点";
+
+    createFocusQuestion();
+  } else {
+    playWrongSound();
+    
+    focusMessage.textContent = "❌ 違うよ！もう一度";
+    focusMessage.style.color = "red";
+  }
+}
+
+function updateFocusTimer() {
+  if (!focusPlaying) return;
+
+  const remaining = Math.max(
+    0,
+    Math.ceil((focusEndTime - Date.now()) / 1000)
+  );
+
+  focusTimerText.textContent =
+    "残り時間：" + remaining + "秒";
+
+  if (remaining <= 0) {
+    finishFocusGame();
+  }
+}
+
+function finishFocusGame() {
+  if (!focusPlaying) return;
+
+  playEndSound();
+  
+  focusPlaying = false;
+  stopFocusTimer();
+  saveBestRecord("focus", focusScore);
+
+  focusTimerText.textContent = "終了！";
+
+  focusGrid.innerHTML = "";
+
+  focusMessage.textContent =
+    "🎉 正解数：" + focusCorrectCount +
+    "問 ／ 得点：" + focusScore + "点";
+
+  focusMessage.style.color = "#7546b4";
+
+  focusRetry.classList.remove("hidden");
+}
+
+function stopFocusTimer() {
+  if (focusTimerId !== null) {
+    clearInterval(focusTimerId);
+    focusTimerId = null;
+  }
+}
+
+function focusGoHome() {
+  // プレイ途中で戻る場合だけ終了音を鳴らす
+  if (focusPlaying) {
+    playEndSound();
+  }
+
+  focusPlaying = false;
+  stopFocusTimer();
+
+  focusGame.classList.add("hidden");
+  home.classList.remove("hidden");
+}
+
+/* ===== 集中力ゲーム V1 ここまで ===== */
+
+
+
+/* ===== Daily Brain 最高記録保存 V1 ===== */
+
+const RECORD_KEYS = {
+  memory: "dailybrain_best_memory_v1",
+  math: "dailybrain_best_math_v1",
+  focus: "dailybrain_best_focus_v1"
+};
+
+function getBestRecord(type) {
+  try {
+    const value = localStorage.getItem(RECORD_KEYS[type]);
+
+    if (value === null) return null;
+
+    const number = Number(value);
+
+    if (!Number.isSafeInteger(number) || number < 0) {
+      return null;
+    }
+
+    return number;
+  } catch (error) {
+    console.warn("記録の読み込みに失敗", error);
+    return null;
+  }
+}
+
+function saveBestRecord(type, score) {
+  if (!Number.isSafeInteger(score) || score < 0) {
+    return;
+  }
+
+  const previous = getBestRecord(type);
+
+  if (previous !== null && score <= previous) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(RECORD_KEYS[type], String(score));
+  } catch (error) {
+    console.warn("記録の保存に失敗", error);
+  }
+
+  updateBestRecords();
+}
+
+function updateBestRecords() {
+  const memory = getBestRecord("memory");
+  const math = getBestRecord("math");
+  const focus = getBestRecord("focus");
+
+  document.getElementById("bestMemory").textContent =
+    "🧩 記憶力：" +
+    (memory === null ? "記録なし" : "レベル " + memory);
+
+  document.getElementById("bestMath").textContent =
+    "🔢 計算：" +
+    (math === null ? "記録なし" : math + "点");
+
+  document.getElementById("bestFocus").textContent =
+    "⚡ 集中力：" +
+    (focus === null ? "記録なし" : focus + "点");
+}
+// 今日のプレイ回数
+const DAILY_PLAYS_KEY = "dailybrain_daily_plays_v1";
+const PLAY_STREAK_KEY = "dailybrain_play_streak_v1";
+const SOUND_ENABLED_KEY = "dailybrain_sound_enabled_v1";
+const BADGES_KEY = "dailybrain_badges_v1";
+const PLAY_HISTORY_KEY = "dailybrain_play_history_v1";
+// PCのローカル日付を取得
+function getTodayKey() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+// 今日のプレイ回数を取得
+function getTodayPlays() {
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem(DAILY_PLAYS_KEY) || "null"
+        );
+
+        if (saved && saved.date === getTodayKey()) {
+            const count = saved.count;
+            if (Number.isSafeInteger(count) && count >= 0) {
+                return count;
+            }
+        }
+    } catch (e) {
+        console.warn("プレイ回数の読み込みに失敗", e);
+    }
+
+    return 0;
+}
+
+// 今日のプレイ回数を表示
+function updateTodayPlays() {
+    const element = document.getElementById("todayPlays");
+
+    if (element) {
+        element.textContent =
+            "今日のプレイ回数：" + getTodayPlays() + "回";
+    }
+}
+
+// ゲーム開始時に1回加算
+function addTodayPlay() {
+    const count = getTodayPlays() + 1;
+
+    try {
+        localStorage.setItem(
+            DAILY_PLAYS_KEY,
+            JSON.stringify({
+                date: getTodayKey(),
+                count: count
+            })
+        );
+    } catch (e) {
+        console.warn("プレイ回数の保存に失敗", e);
+    }
+
+    updateTodayPlays();
+    recordPlayStreak();
+    updatePlayStreak();
+    updateDailyGoal();
+    checkBadges();
+    updateBadges();
+    savePlayHistory();
+    updatePlayHistory();
+  }   
+// 連続プレイ日数を記録
+function recordPlayStreak() {
+    const today = getTodayKey();
+
+    // 昨日の日付を取得
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+
+    const year = yesterdayDate.getFullYear();
+    const month = String(yesterdayDate.getMonth() + 1).padStart(2, "0");
+    const day = String(yesterdayDate.getDate()).padStart(2, "0");
+    const yesterday = `${year}-${month}-${day}`;
+
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem(PLAY_STREAK_KEY) || "null"
+        );
+
+        let streak = 1;
+
+        if (saved && Number.isSafeInteger(saved.streak)
+            && saved.streak > 0) {
+
+            if (saved.date === today) {
+                return;
+            }
+
+            if (saved.date === yesterday) {
+                streak = saved.streak + 1;
+            }
+        }
+
+        localStorage.setItem(
+            PLAY_STREAK_KEY,
+            JSON.stringify({
+                date: today,
+                streak: streak
+            })
+        );
+
+    } catch (e) {
+        console.warn("連続プレイ日数の保存に失敗", e);
+    }
+}
+ 
+      // 連続プレイ日数を画面に表示
+function updatePlayStreak() {
+    const element = document.getElementById("playStreak");
+
+    if (!element) {
+        return;
+    }
+
+    let streak = 0;
+
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem(PLAY_STREAK_KEY) || "null"
+        );
+
+        if (saved && Number.isSafeInteger(saved.streak)
+            && saved.streak > 0) {
+
+            const today = getTodayKey();
+
+            const yesterdayDate = new Date();
+            yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+
+            const year = yesterdayDate.getFullYear();
+            const month = String(yesterdayDate.getMonth() + 1).padStart(2, "0");
+            const day = String(yesterdayDate.getDate()).padStart(2, "0");
+            const yesterday = `${year}-${month}-${day}`;
+
+            if (saved.date === today || saved.date === yesterday) {
+                streak = saved.streak;
+            }
+        }
+    } catch (e) {
+        console.warn("連続プレイ日数の読み込みに失敗", e);
+    }
+
+    element.textContent = "🔥 連続プレイ日数：" + streak + "日";
+}
+// 今日の目標を表示
+function updateDailyGoal() {
+    const element = document.getElementById("dailyGoal");
+
+    if (!element) {
+        return;
+    }
+
+    const plays = getTodayPlays();
+    const goal = 3;
+
+    if (plays >= goal) {
+        element.textContent = "🎉 今日の目標クリア！";
+    } else {
+        element.textContent =
+            "🎯 今日の目標：" + plays + " / " + goal + "回";
+    }
+}
+// バッジの獲得判定と保存
+function checkBadges() {
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem(BADGES_KEY) || "[]"
+        );
+
+        const badges = Array.isArray(saved) ? saved : [];
+
+        const plays = getTodayPlays();
+
+        const streakData = JSON.parse(
+            localStorage.getItem(PLAY_STREAK_KEY) || "null"
+        );
+
+        let streak = 0;
+
+        if (streakData &&
+            streakData.date === getTodayKey() &&
+            Number.isSafeInteger(streakData.streak) &&
+            streakData.streak > 0) {
+            streak = streakData.streak;
+        }
+
+        // 初めてゲームをプレイ
+        if (plays >= 1 && !badges.includes("first")) {
+            badges.push("first");
+        }
+
+        // 1日3回プレイ
+        if (plays >= 3 && !badges.includes("daily3")) {
+            badges.push("daily3");
+        }
+
+        // 3日連続プレイ
+        if (streak >= 3 && !badges.includes("streak3")) {
+            badges.push("streak3");
+        }
+
+        // 7日連続プレイ
+        if (streak >= 7 && !badges.includes("streak7")) {
+            badges.push("streak7");
+        }
+
+        localStorage.setItem(
+            BADGES_KEY,
+            JSON.stringify(badges)
+        );
+
+    } catch (e) {
+        console.warn("バッジの保存に失敗", e);
+    }
+}
+// 獲得バッジを画面に表示
+function updateBadges() {
+    const element = document.getElementById("badgeList");
+
+    if (!element) {
+        return;
+    }
+
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem(BADGES_KEY) || "[]"
+        );
+
+        const badges = Array.isArray(saved) ? saved : [];
+
+        const badgeNames = [];
+
+        if (badges.includes("first")) {
+            badgeNames.push("🥉 はじめの一歩");
+        }
+
+        if (badges.includes("daily3")) {
+            badgeNames.push("🎯 今日の達成者");
+        }
+
+        if (badges.includes("streak3")) {
+            badgeNames.push("🥈 3日連続");
+        }
+
+        if (badges.includes("streak7")) {
+            badgeNames.push("🥇 7日連続");
+        }
+
+        if (badgeNames.length === 0) {
+            element.textContent =
+                "まだ獲得したバッジはありません";
+        } else {
+            element.textContent = badgeNames.join(" / ");
+        }
+
+    } catch (e) {
+        console.warn("バッジの読み込みに失敗", e);
+        element.textContent =
+            "バッジを読み込めませんでした";
+    }
+}
+// 今日のプレイ回数を履歴に保存
+function savePlayHistory() {
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem(PLAY_HISTORY_KEY) || "{}"
+        );
+
+        const history =
+            saved && typeof saved === "object" &&
+            !Array.isArray(saved) ? saved : {};
+
+        const today = getTodayKey();
+        const plays = getTodayPlays();
+
+        // 今日のプレイ回数を記録
+        history[today] = plays;
+
+        localStorage.setItem(
+            PLAY_HISTORY_KEY,
+            JSON.stringify(history)
+        );
+
+    } catch (e) {
+        console.warn("プレイ履歴の保存に失敗", e);
+    }
+}
+// 過去7日間のプレイ履歴を表示
+function updatePlayHistory() {
+    const element = document.getElementById("playHistory");
+
+    if (!element) {
+        return;
+    }
+
+    try {
+        const saved = JSON.parse(
+            localStorage.getItem(PLAY_HISTORY_KEY) || "{}"
+        );
+
+        const history =
+            saved && typeof saved === "object" &&
+            !Array.isArray(saved) ? saved : {};
+
+        const records = [];
+
+// 過去7日間のデータを取得
+for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    const key = `${year}-${month}-${day}`;
+    const count = history[key];
+
+    records.push({
+        date: month + "/" + day,
+        count: Number.isSafeInteger(count) && count >= 0
+            ? count
+            : null
+    });
+}
+
+// 最大プレイ回数を取得
+const maxCount = Math.max(
+    1,
+    ...records.map(record => record.count ?? 0)
+);
+
+// グラフを作成
+const fragment = document.createDocumentFragment();
+
+records.forEach(record => {
+    const row = document.createElement("div");
+    row.className = "history-row";
+
+    const dateLabel = document.createElement("span");
+    dateLabel.className = "history-date";
+    dateLabel.textContent = record.date;
+
+    const barBg = document.createElement("div");
+    barBg.className = "history-bar-bg";
+
+    const bar = document.createElement("div");
+    bar.className = "history-bar";
+
+    const count = record.count ?? 0;
+    bar.style.width = (count / maxCount * 100) + "%";
+
+    barBg.appendChild(bar);
+
+    const countLabel = document.createElement("span");
+    countLabel.className = "history-count";
+
+    countLabel.textContent = record.count === null
+        ? "記録なし"
+        : count + "回";
+
+    row.appendChild(dateLabel);
+    row.appendChild(barBg);
+    row.appendChild(countLabel);
+
+    fragment.appendChild(row);
+});
+
+// 画面に表示
+element.replaceChildren(fragment);
+
+    } catch (e) {
+        console.warn("プレイ履歴の読み込みに失敗", e);
+        element.textContent = "履歴を読み込めませんでした";
+    }
+}
+
+updateBestRecords();
+updateTodayPlays();
+updatePlayStreak();
+updateDailyGoal();
+checkBadges();
+updateBadges();
+savePlayHistory();
+updatePlayHistory();
+loadSoundSetting();
+loadSoundVolume();
+/* ===== 最高記録保存 V1 ここまで ===== */
+
+
+</script>
+
+</body>
+</html>
